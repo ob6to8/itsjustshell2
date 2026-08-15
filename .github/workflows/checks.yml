@@ -1,0 +1,16 @@
+# Record checks on every PR — the server half of the cycle gate
+# (docs/workflow.md). Provenance: exchanges/2026-08-15-bootstrap-thread.md
+name: records
+on:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  records:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: '27'
+          elixir-version: '1.18'
+      - run: elixir tools/check_records.exs

@@ -1,5 +1,4 @@
 ---
-id: 0001
 session_id: session_0138qC61wgE2ymJjat2sLNvy
 date: 2026-08-15T00:00:00Z
 model: 
@@ -368,6 +367,57 @@ should an idealized version of this list (ie. post-first bootstrap run) be inclu
 
 i need to test the api calls for the classifier agent. how can i do this? should this be included in getting started or setup too? people cloning this repo may not realize how the system uses command line calls to a harnessed agent, as well as api classifier calls. in fact it would be worth explaining how to spcefically integrate with claude code, codex, and pi
 
+*→ response: [Agent 28.1](#agent-281)*
+
+### Turn 29
+
+open pr, merge to main
+
+*→ response: [Agent 29.1](#agent-291)*
+
+### Turn 30
+
+delete the merged branch
+pros and cons to keeping commit to main vs prs?
+
+*→ response: [Agent 30.1](#agent-301)*
+
+### Turn 31
+
+"the id counter is the filesystem, so parallel PR branches can both mint 0007 and propose deps to paths that don't exist on the other branch until merge; and derived views regenerate per-branch, so index.md becomes a perpetual merge-conflict generator. Linear commits to main dissolve both by construction." - if multiple people are working on the same repo and pushing to main while minting their own local ids isn't that more of a mess than PRs? seems like a local id counter is POC level at best
+
+"Enforcement is client-side only: core.hooksPath is per-clone opt-in, so a clone that forgot the config lands unchecked commits on main. That's INV-5's known residue. No diff-shaped surface for reviewing large changes. And it assumes a single writer forever." - what is "INV-5" and where are these "INV"s defined?
+
+"PRs, against — Everything above: too-late review for captures, per-record ceremony and remote round-trips, id races, view-churn conflicts." - the same review phase that exists for the direct commit strategy could occur for the PR strategy - the PR would become like double entry bookkeeping. can you explain the other cons?
+
+*→ response: [Agent 31.1](#agent-311)*
+
+### Turn 32
+
+what if we:
+delete the id field
+define the conventional operation approach as checkout a branch, commit to that branch for each exchange, submit PR when operator decides a particular cycle of work is done, and since operator needs to handwrite the commit message defining this cycle will be top of mind, and then on merge of PR all derivable artifacts are re-derived
+
+*→ response: [Agent 32.1](#agent-321)*
+
+### Turn 33
+
+"One convention makes the whole thing airtight solo: one open cycle at a time, and deps may target only main + the current branch. Costs nothing today; the day a second writer appears, that's the tripwire for revisiting." - why couldn't you maintain several branches at once, like dev features? what would prevent this with the system we are discussing?
+
+1 - agree
+2 - agree
+3 - agree
+4 - confirm
+
+sounds good on hand written merge message. alongside this, you will record agent merge messages, correct?did that flow survive, and is it documented?
+also - everything we just discussed regarding the flow should be persisted in docs - not HOW we got here or how it relates to previous decisions, simply what the protocol and expected behavior is
+
+*→ response: [Agent 33.1](#agent-331)*
+
+### Turn 34
+
+ok before i do, update the thread transcript - DO NOT regenerate, as there has certainly been compaction, append only
+
 *→ response: executed as this revision — [Side Effects](#side-effects)*
 
 ## Response
@@ -376,8 +426,8 @@ i need to test the api calls for the classifier agent. how can i do this? should
 > Verbatim record of every agent message displayed in the bootstrap
 > thread, in order, grouped under the operator turn each answered
 > (operator turns are in ## Prompt above; "Agent N.m" = m-th agent
-> message while handling Turn N). Coverage: operator Turns 1–28 and
-> agent messages through Agent 27.1; Turn 28's update is this revision
+> message while handling Turn N). Coverage: operator Turns 1–34 and
+> agent messages through Agent 33.4; Turn 34's update is this revision
 > itself, recorded in Side Effects. Tool calls and
 > their results (the work layer) are not chat messages and are not
 > reproduced here — their evidence is the git history cited in Side
@@ -1481,6 +1531,162 @@ If step 3 or 4 breaks in a way that isn't in that list, bring me the exact comma
 
 *→ [Turn 28](#turn-28)*
 
+### Agent 26.0 — Turn 26 interim statuses, recorded late
+
+*(Omitted from the Turn-28 append, which recorded turns 26–27 by final
+message only; appended here rather than reordered, per append-only. The
+omission itself is logged in Side Effects.)*
+
+(a) Two tasks: bring the record current through my wrap reply (append-only — agreed on the compaction risk, everything I append here is from the recent, uncompacted window), then merge Direction PR #24. Writing the append part now.
+
+(b) Structure correct (26/78, headers unique). Now the coverage/Side-Effects updates.
+
+(c) Record is current and pushed (`main` = `4df6e33`). Now merging Direction PR #24.
+
+### Agent 28.1
+
+Both answers are yes, with one correction that itself proves the docs gap you're pointing at: **the classifier is not a raw API call** — today *both* calls per capture go through the claude CLI in print mode (harnessed agent, no HTTP API anywhere in the repo). That's exactly the kind of thing a cloner can't know, so: building `docs/setup.md` (idealized first-contact + the inference path + classifier testing tiers), extending `backend-contract.md` with the add-a-backend recipe (fixtures-first, with codex/pi as named candidates — and an honest refusal to fabricate their envelope shapes), fixing the `ask.exs` printed-hint defect while I'm in there, and bringing the record current. Writing.
+
+### Agent 28.2
+
+Now bringing the record current — Agent 26.1, Turn 27, the walkthrough as Agent 27.1, and Turn 28.
+
+### Agent 28.3
+
+All in, pushed — `main` = `de3e67a` (`73d0315` docs · `8d882c4` ledger init · `1b40dfd` tools · `de3e67a` acceptance). Re-clone before first use, as ever.
+
+**1 — Setup doc: yes, and it exists.** `docs/setup.md` — prerequisites with the verify one-liner, the six first-contact steps each with expected output, the audit checklist (including the NEW-tag and dep-to-bootstrap cases), failure behaviors, and the knobs. README and the docs list point at it. It's IS-only: what to run, what you'll see — no thread history.
+
+**2 — Testing the classifier, with one correction that proves your docs instinct:** there are no API calls to test — **both** calls per capture are command-line invocations of the harnessed agent (`claude -p`), and the repo contains no HTTP client at all. That's now stated explicitly in setup.md's "What actually runs when you capture" section, because you're right that a cloner would never guess it. The testing answer is the **three tiers**, all documented:
+
+- **Stub tier** (zero inference): `ASK_STUB=… ASK_STUB_CLASSIFY=…` with the shipped fixtures — full pipeline mechanics, canned content; `classify-2.json` exercises the ugly paths (fenced reply, NEW tag, dropped dep).
+- **Mixed tier — this is your answer**: `ASK_STUB=tools/stub-fixtures/answer-1.json elixir tools/ask.exs classifier-test "…"` — call 1 canned, **call 2 live** at the cheap tier, fractions of a cent. You audit the live judgment: sensible tags from your taxonomy? real continuations, given the shown-list? Repeat across `ASK_CLASSIFY_MODEL` values to compare tiers.
+- **Full live** — the first-contact capture itself.
+
+Both stub and mixed runs write real ledger files, so the doc says: scratch clone, or delete + rerun the deriver before committing.
+
+**3 — Claude Code / codex / pi integration:** `backend-contract.md` now carries the **fixtures-first recipe**: discover the vendor CLI's headless surface → **pin its raw envelope as a stub fixture before writing any code** (exactly how backend #1 was built — the shipped fixtures are captured claude-CLI output, not documentation) → write the adapter in its own `tools/backend-<vendor>` file → run the pipeline in stub mode against the new fixtures → arm the vendor-name grep the moment that second adapter file exists (T1). Codex and pi are named as the intended next adapters — and their envelope shapes are deliberately **absent**: the contract records no shape it hasn't pinned as a fixture, because me writing codex's or pi's output format from memory would be precisely the invented-history failure we just armed a check against. Step 2 on your machine is where those shapes enter, as evidence.
+
+Also closed while in there: the `ask.exs` printed commit hint now says `git add -A` — so the walkthrough's "known small defect" is gone (your first through-the-loop fix will have to be something real instead). And the record is current through Turn 28: Agent 26.1 and the full walkthrough as Agent 27.1 appended, coverage and Side Effects updated, checks green through the hook.
+
+*→ [Turn 29](#turn-29)*
+
+### Agent 29.1
+
+Let me verify what's actually unmerged anywhere before acting — last turn's work went straight to itsjustshell2's `main`, and Direction's PR #24 was merged, so I want facts before opening anything.
+
+### Agent 29.2
+
+Nothing to open — everything is already on `main` in both repos. The verification just now:
+
+- **Direction**: working tree clean; the branch's final commit (`2c00139`) is exactly what PR #24 squash-merged into `main` as `a527723` last turn. Zero commits exist between the branch and `main`, so GitHub would refuse a PR outright ("nothing to compare").
+- **itsjustshell2**: clean, `main` = `de3e67a` locally and remotely — identical. Last turn's setup.md/backend-recipe/record work never lived on a branch: per the bootstrap-window convention we've used all thread, it was folded into the four bootstrap commits and force-pushed straight to `main`. There is no branch and no diff to PR.
+
+So the PR-and-merge you're asking for already happened where it could (Direction, #24 → `a527723`), and was never applicable where it couldn't (itsjustshell2, which has only ever had `main`).
+
+Two loose ends you may want, say the word on either: I can **delete the merged Direction branch** (`claude/exchange-workflow-automation-r2tg1z`) for tidiness — it's fully merged, deletion loses nothing. And going forward in itsjustshell2, now that bootstrap is closed, changes arrive as *exchange + your commit* on `main` per the loop; if you'd rather they travel via PRs instead, that's a process preference to state in `docs/methods.md` — the machinery doesn't care either way, the hook guards both paths.
+
+*→ [Turn 30](#turn-30)*
+
+### Agent 30.1
+
+Deleting the merged branch first, then the analysis.
+
+### Agent 30.2
+
+Branch deletion: **half done, half blocked by permissions.** The local branch is deleted and your local Direction checkout now sits on `main` at `a527723`. The remote deletion was refused — HTTP 403 from the git proxy, twice: this session's credentials can push commits but evidently not delete refs, and the GitHub integration has no branch-deletion tool either. It's one click for you: the "Delete branch" button on PR #24 (or the trash icon on the branches page). Fully merged, so deletion loses nothing.
+
+**Direct-to-main vs PRs, specific to this system:**
+
+*Direct-to-main, for* — It's the loop's native gait: audit = reading the file, ratification = your commit; a PR adds a second review of content you already read, which is your own "PRs are too late" aphorism made concrete — review at the PR stage is discovery-stage rubber-stamping, and this system front-loads verification precisely so that stage has nothing left to do. The hook gates at the true entry point. Zero ceremony per capture — friction there is persistence debt reborn as merge debt. And two mechanical points people miss: the `id` counter is the filesystem, so **parallel PR branches can both mint `0007`** and propose deps to paths that don't exist on the other branch until merge; and derived views regenerate per-branch, so `index.md` becomes a perpetual merge-conflict generator. Linear commits to `main` dissolve both by construction.
+
+*Direct-to-main, against* — Enforcement is client-side only: `core.hooksPath` is per-clone opt-in, so a clone that forgot the config lands unchecked commits on `main`. That's INV-5's known residue. No diff-shaped surface for reviewing *large* changes. And it assumes a single writer forever.
+
+*PRs, for* — One structural win, and it's real: **server-side enforcement**. Branch protection plus a required status check (a ~10-line GitHub Action running `check_all`) makes the gate un-skippable regardless of any clone's config — mechanism over discipline, at the server, which is exactly your norms→machinery instinct; it's the only way to get that, because required checks can't gate direct pushes. Second: for executor-mode work (multi-file agent changes), A7′ says the audit surface *is* the diff — and a PR is a purpose-built diff viewer. Third: safe if a second writer ever appears.
+
+*PRs, against* — Everything above: too-late review for captures, per-record ceremony and remote round-trips, id races, view-churn conflicts.
+
+**Recommendation — split by mode, which your role system already implies:** captures (the daily respondent/classifier loop) go direct to `main`; executor-scale changes (multi-file, agent-session work) go branch → PR, where the diff surface and server gating earn their cost. And independent of that choice, add the CI floor either way: `check_all` on every push via a small GitHub Action — blocking under branch protection if you adopt PRs, a misconfigured-clone tripwire if you don't. That Action, incidentally, is now the cleanest candidate for your first change through the loop: one exchange for the fenced workflow file, one `mkdir .github/workflows` + commit from you, and the exit criterion gets its first pass.
+
+*→ [Turn 31](#turn-31)*
+
+### Agent 31.1
+
+All three cut real seams — and the first one catches me overstating. No changes made; answers only.
+
+**1 — "isn't shared-main with local counters worse than PRs? POC level at best"**
+
+You're right, and my framing was misleading: I sold the id race as a *PR* con, but it's a **concurrency** con — PRs versus direct-to-main only move *where* the collision surfaces. Two writers on shared `main` both mint `0007` offline; the second `git push` is rejected (non-fast-forward), they pull, and... the collision is still sitting there in content unless something catches it — and here's the honest kicker: **nothing does. `check_exchanges` doesn't enforce id uniqueness.** Under PRs the same collision just surfaces later, at merge, batched with everything else. So: a filesystem-max counter is single-writer by construction, "POC level" is the accurate grade for multi-writer use, and no merge discipline fixes it because the defect is in the allocator, not the transport.
+
+What actually fixes it, in ascending order of machinery: **(a) delete the field** — and notice the design is already telling you this: `deps:` links by *path*, threads derive from paths, the filename (date-slug) is already the unique key, and `date:` already gives ordering. `id:` is inherited ceremony from the old schema that nothing consumes. (b) Collision-free ids (ULIDs) — unordered, ugly, but multi-writer-safe. (c) Assign ids at a serialization point (CI mints on merge) — a counter service, heavy. My recommendation: when a second writer becomes real, the move is (a) via supersession, not engineering a distributed counter for a field with no consumers. Until then, two cheap arms are available: id-uniqueness added to `check_exchanges` (catches even single-writer typos), and a tripwire entry — *second writer appears → drop or replace `id:`, revisit merge discipline* — so the decision is pre-committed instead of rediscovered mid-mess.
+
+**2 — What INV-5 is, and where INVs live**
+
+`docs/invariants.md` in itsjustshell2 — "the register," the numbered invariant list, five entries capped at five, each carrying Origin · Breaks-if-violated · Armed-by, governed by append-and-supersede. The five: **INV-1** exchanges are schema-complete (armed: `check_exchanges`); **INV-2** committed records are immutable and derived views equal their regeneration (armed: `check_views` for the views half; the record-immutability half is git discipline — known residue); **INV-3** every dep resolves (armed: `check_deps`); **INV-4** every doc carries exactly one authorship marker (armed: `check_authorship`); **INV-5** every commit is operator-made and passes `check_all` (armed: the pre-commit hook for the checks half; *no-agent-commits* is contract in `CLAUDE.md`, unmechanized — that's the residue I was citing). Each check's file header names the INV it arms, and the glossary's "register" and "checks" entries cross-link it all. Fair hit implicitly taken: I used "INV-5" in chat as if it were common vocabulary — the repo defines it, my message didn't.
+
+**3 — The double-entry framing, and the remaining cons properly explained**
+
+Your double-entry analogy is exactly the right test, and it cuts both ways: double-entry works because the two entries are **independent recordings that must reconcile**. A PR you open and self-merge minutes after auditing the same content locally is the *same entry written twice* — same person, same judgment, no reconciliation — which is signature ceremony, and ceremony that invites rubber-stamping. It becomes genuine double-entry only when the second entry is an independent bookkeeper: **CI running `check_all` on the server** (a different machine executing the checks — real reconciliation), a verifier agent posting findings against the diff, or a second human. So the sharpened conclusion: *the PR itself adds nothing; the independent checks you can attach to it add everything.* Branch protection + required CI is the only way to make those checks blocking — that's the whole PR value proposition for this repo in one line.
+
+The other cons, mechanically:
+
+- **Ceremony and round-trips**: per capture, the PR path is branch → push → open PR → wait for CI → merge → pull, six steps with network in the loop, against commit-and-push. For a system whose unit of work is a thirty-second Q&A, that's flow-breaking overhead on every record — friction exactly where the design spent its effort removing it.
+- **View churn**: derived files (`index.md`, threads) are *regenerated wholesale* from the ledger. Two concurrent branches that each add an exchange both rewrite the same index files; git's three-way merge of two machine-regenerated versions of the same file conflicts essentially every time, and hand-resolving a `#derived` file is exactly what `check_views` exists to forbid. The PR-world fix is regenerate-after-merge (broken-then-fixed commits) or a merge queue.
+- **And the corrected frame for both this and the id race**: these are concurrency costs under *either* mode. Direct-to-main doesn't dissolve them — it **forces serialization early** (push rejection makes the second writer integrate immediately, while divergence is one commit deep). PRs *defer* integration, letting divergence accumulate until merge, where it's batched and uglier. Merge queues are the industrial cure, and note what they are: paid machinery to reintroduce the serialization that shared-main gives you free at small scale.
+
+Net, unchanged but better-founded: single operator → direct-to-main plus the CI floor; the day there's a second writer, that's the tripwire firing — PRs with required checks *and* the id field's funeral, together.
+
+*→ [Turn 32](#turn-32)*
+
+### Agent 32.1
+
+This design is better than both options I compared last turn — it takes the real objections and dissolves them structurally rather than trading them off. Assessment, then the four rulings it needs before I execute.
+
+**Why it works:**
+
+- **Deleting `id` is independently right** (nothing consumes it — deps link by path, order lives in `date:` and the filename), and your workflow makes the last argument for keeping it disappear entirely: with no counter, branches mint nothing that can collide.
+- **The derived-file conflict problem vanishes by construction, not by discipline.** The rule your design implies — and it's the load-bearing sentence: **branches carry only records (exchanges + sidecars); derived views exist only on `main`, written at merge.** Generated files never ride feature branches, so there is nothing for concurrent cycles to conflict over. That's the textbook fix for generated-artifact churn, and it's cleaner than my per-capture refresh — which your design supersedes (the `ask.exs` view-refresh tail I added at Turn 25 comes back out; capture returns to writing exactly two files).
+- **The PR becomes real double-entry**, per your own test from last turn: entry one is your per-exchange audit-and-commit on the branch; entry two is the *independent* server-side `check_all` required on the PR, plus your hand-written merge message. Different bookkeepers, actual reconciliation.
+- **"Cycle" is a genuinely new and good unit.** Naming the branch when you open it is the same anti-persistence-debt move as naming an exchange before the answer exists — intent declared up front; the hand-written merge message closes the loop as a forced self-audit of what the cycle *was*. And cycles are orthogonal to threads: threads = content lineage (deps), cycles = work episodes (branches). Both end up derivable views.
+- One convention makes the whole thing airtight solo: **one open cycle at a time**, and deps may target only `main` + the current branch. Costs nothing today; the day a second writer appears, that's the tripwire for revisiting.
+
+**Four rulings it needs:**
+
+1. **Who commits the re-derivation on `main` after merge?** (a) *Recommended:* a CI job derives and commits — which requires superseding INV-5, and honestly the supersession is principled, not a loosening: INV-5′ = *no agent commits to `main`; the ratification gate is your merge; cycle branches may carry agent commits; and the derivation job may commit to `main` touching `#derived` paths only.* A deterministic deriver isn't an agent — that's your own trust gradient, and `#derived` exists precisely to mark script output. Enforceable too (the job's commit is refused if it touches anything outside `taxonomy/` and `threads/`). (b) Alternative: you run the derivers and commit after each merge — keeps INV-5 pristine at the cost of a recurring mechanical chore, which is the thing you've consistently ruled off your plate.
+2. **Check timing splits, and needs ratifying:** the pre-commit hook on branches runs the three record checks only; `check_views` stops gating branch commits (views are *supposed* to be stale there) and becomes the merge pipeline's job — derive, verify reproducibility, commit. A scheduled or push-triggered CI check on `main` keeps it honest continuously.
+3. **Merge style:** *recommended squash* — `main` becomes one commit per cycle, each carrying your hand-written message: literally a cycle ledger, and it matches your Direction habit. Merge-commit instead if you want the interior per-exchange commits visible in `main`'s history (the records carry their own dates regardless).
+4. **The one mutation:** the bootstrap record's frontmatter carries `id: 0001`, and an exact-key schema check can't both drop `id` and accept that record. Cleanest: the id line comes out of the record inside this same change — one last touch, ratified by your merge of the cycle that retires the field.
+
+**And the meta-move that makes this land right:** implement the proposal *by* the proposal. I open `cycle/2026-08-15-retire-id-and-cycle-workflow`, commit the whole sweep there — schema and checker to eight keys, `ask.exs` (drop id minting + view-refresh tail), prop generator, docs (schema, setup, glossary, invariants with the INV-5→INV-5′ supersession as the register's first real dated ceremony, methods' workflow section), the two small GitHub Actions, the record's one-line fix — open the PR, and stop. **Your hand-written merge message ratifies it**, the derivation job fires for the first time, and the new workflow's first instance is its own adoption. Give me the four rulings and the word.
+
+*→ [Turn 33](#turn-33)*
+
+### Agent 33.1
+
+All four rulings received — executing as cycle #1, through the new protocol itself. Two answers woven into the work below (parallel branches: you're right, nothing prevents it anymore — retracting my one-cycle rule; dual-ledger: it did *not* survive into v2, and this cycle revives it as PR-body = agent's merge message). Opening the branch and starting the id retirement.
+
+### Agent 33.2
+
+Now the workflow doc, the check split, and the CI pair.
+
+### Agent 33.3
+
+All green — record checks, full suite, property loop, and an id-free smoke capture with the new flow hints. Landing the cycle as three commits, pushing, opening the PR.
+
+### Agent 33.4
+
+**itsjustshell2 PR #1 is open and waiting on the only act the protocol reserves for you: the hand-written squash merge.** All four rulings executed; the cycle implements itself — agent commits on a delegated `cycle/` branch, PR body standing as my half of the dual entry.
+
+**Your parallel-branches question — you caught me being over-cautious.** Nothing prevents several concurrent cycles anymore; my "one at a time" was leftover reflex from the id-counter era. With `id` gone (no counter to collide) and views main-only (nothing generated to conflict), cycles parallelize exactly like feature branches. The two residual couplings, now stated as rules in `workflow.md`: **deps target `main` ∪ the cycle's own branch** — wanting a dep into another open cycle means they're really one cycle, or one merges first — and two branches minting the same `YYYY-MM-DD-<slug>` filename surfaces as an ordinary git conflict at the second merge. That's the whole collision surface. Retracted and documented accordingly.
+
+**The dual-ledger — honest answer: it did not survive into v2.** The POC's `.meta/agent/repo-history.md` protocol (your perfunctory commit as forced self-audit, beside the commit message the agent *would* have written) was never carried over and was documented nowhere. This cycle revives it in the shape the new workflow makes natural: **when an agent works a cycle, the PR description *is* the agent's merge message; your hand-written squash message is the operator entry — two independent accounts of the same cycle, juxtaposed on the PR page forever, divergence visible at a glance.** Codified in `workflow.md` and as a standing rule in `CLAUDE.md`; PR #1's body is the first instance.
+
+**Persisted as protocol, IS-only, per your ruling:** `docs/workflow.md` carries the whole flow with zero history — cycle naming, what rides branches (everything except derived views), record checks at commit and PR, operator-only squash-merge ratification, the derivation job as `main`'s second writer, dep scoping, parallel cycles, failure handling, and the intended branch-protection settings (console acts, recorded there for you to apply). Supporting changes: INV-5 → INV-5′ as the register's first dated supersession, glossary entries for *cycle* and *derivation job*, `check_records.exs` split out for the hook and PR check, the CI pair (`checks.yml`, `derive.yml`), and `ask.exs` simplified (no id, no view refresh, branch-flow commit hint). Verified before push: record checks, full suite, 15-round property loop, and an id-free stubbed capture — all green.
+
+**On your merge:** write the message that says what this cycle was, squash-merge, then check the Actions tab — the derivation job's first live run should find views current and exit green without committing. Then flip the protection toggles listed in `workflow.md`, and the gate is mechanism end to end.
+
+*→ [Turn 34](#turn-34)*
+
 ## Side Effects
 #derived
 
@@ -1490,11 +1696,13 @@ this version supersedes-in-place the condensed Response of the original bootstra
 declared transform: inside embedded quotations in the Response, lines exactly matching a schema section header carry one leading space (see Response preamble); all other agent text is byte-verbatim as displayed
 operator rulings (Turn 21, bootstrap phase, pre-first-use): turn/response navigation apparatus added (declared in the Response preamble); operator turns 13–16 appended to the Prompt (they postdated the first assembly); docs/glossary.md created and glossary term links added throughout the docs
 operator rulings (Turn 22, bootstrap phase, pre-first-use): Turn 21's marker change reversed as the operator's own misassociation — the assembler's preface moved above the Prompt section, the Prompt marker restored to #human-authored (operator words alone under the operator marker), check_exchanges rolled back to uniform marker enforcement; navigation links moved to the bottom of every turn and response group, so reading order flows into the link in both directions
-coverage boundary: operator Turns 1–28 and agent messages through Agent 27.1; Turn 28's update is this revision itself
+coverage boundary: operator Turns 1–34 and agent messages through Agent 33.4; Turn 34's update is this revision itself
 created this repository's seed: docs/ (constitution, intent, invariants, roles, exchange-schema, backend-contract, methods, tripwires, glossary), tools/ (ask.exs, check_authorship.exs, check_exchanges.exs, check_deps.exs, check_all.exs, derive_threads.exs, derive_indexes.exs, hooks/pre-commit, stub-fixtures/), taxonomy/ seed vocabulary, test/prop_checks.exs, README.md, CLAUDE.md
 operator rulings (Turn 23, bootstrap phase, pre-first-use): docs describe only what the repo IS — historical and contrastive language removed throughout (operative constraints retained); the interim decision ledger was not carried into this repo: rulings live verbatim in this record, in force in docs/, and the working ledger remains in the direction workspace
 numbering correction (this revision): earlier Side Effects lines numbered rulings by counting only instruction-bearing turns; corrected here against the actual turn sequence — the navigation/glossary rulings are Turn 21, the marker rollback Turn 22, the IS-only rulings Turn 23
 operator rulings (Turn 25, bootstrap phase, pre-first-use): derived-view reproducibility moved into machinery — tools/check_views.exs regenerates every #derived view and diffs it against the committed copy, wired into check_all and the pre-commit hook, folded into INV-2; ask.exs refreshes views at capture; vendor isolation restated descriptively in backend-contract.md with a grep-armable check scheduled at the second adapter (tripwires T1) — and the review found one real violation, the classifier's cheap-tier default living outside the adapter, now moved into it; operator turns 17–25 and agent messages 17.1–24.1 appended to this record
 operator rulings (Turn 26, bootstrap phase, pre-first-use): record brought current — Turn 26 and agent messages 25.1–25.5 appended, append-only per the operator's compaction caution (no regeneration of earlier content); the direction workspace pull request (#24) merged, closing the bootstrap thread's working record
+operator ruling (cycle 1, post-bootstrap): the id field retired repo-wide — nothing consumed it (deps link by path, order lives in date and filename); the id line removed from this record's frontmatter so the record satisfies the eight-key schema, ratified by the operator's merge of the retiring cycle
 operator rulings (Turn 28, bootstrap phase, pre-first-use): docs/setup.md created — first-contact steps with expected outputs, the inference path made explicit (two CLI-harness calls per capture; no raw API anywhere in the repo), stub and mixed testing tiers for the classifier; backend-contract.md gains the fixtures-first add-a-backend recipe, naming codex and pi as candidate adapters whose envelope shapes are pinned empirically at integration time, never asserted from memory; ask.exs commit hint corrected to git add -A; Turns 27–28 and agent messages 26.1, 27.1 appended to this record
+operator ruling (Turn 34, cycle 1 open): transcript brought current, append-only — operator Turns 29–34 and agent messages 28.1–33.4 appended; Turn 26's three interim status messages, omitted from the earlier append, added late as a labeled block (Agent 26.0) rather than reordered; besides these appends only the coverage metadata lines and Turn 28's navigation pointer were touched
 work-layer evidence (tool calls, tests, file writes between agent messages): the git histories — Direction branch claude/exchange-workflow-automation-r2tg1z commits fa414d1 (capture prototype), 8f98c41 (decision ledger), b6c574e (ledger batch 2), 217ba48 (execution record); this repo's bootstrap commits

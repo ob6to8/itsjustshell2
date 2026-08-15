@@ -35,28 +35,39 @@ recipe for integrating a different vendor CLI.
 
 ## First contact
 
+The full operating protocol — cycles, branches, merges, derivation — is
+[workflow.md](workflow.md); this is the walk-through.
+
 1. **Clone and verify**: `git clone <repo> && cd <repo>` — then
    `elixir tools/check_all.exs; echo $?`. Expect **no output, exit 0**
    (a few seconds; several Elixir processes run, including the view
    regeneration sandbox). Any printed path means a broken clone.
 2. **Arm the hook** (once per clone): `git config core.hooksPath
    tools/hooks`. No output.
-3. **Capture**: run the `ask.exs` command above. Expect 10–40 seconds
-   (two model calls), then: `derived views refreshed`, the exchange and
-   sidecar paths, an `id | tags | deps` summary line, the answer's
-   cost, and a review reminder.
-4. **Audit** — open the exchange file and check, in order: envelope
+3. **Open a cycle**: `git checkout -b cycle/YYYY-MM-DD-<name>` — the
+   cycle is named before its work exists, the same declaration of
+   intent as naming an exchange.
+4. **Capture**: run the `ask.exs` command above. Expect 10–40 seconds
+   (two model calls), then: the exchange and sidecar paths, a
+   `tags | deps` summary line, the answer's cost, and a review
+   reminder.
+5. **Audit** — open the exchange file and check, in order: envelope
    fields populated (session, UTC date, model, cost, cwd; blank only
-   where the backend reported nothing); `id` is next in sequence; your
-   prompt **verbatim**; the answer **verbatim**; Side Effects carries
-   the harness digest, the classifier note, and the retriever coverage
-   line. Tags silly? Edit the `tags:` line by hand — pre-commit, that
-   is the audit working. Side Effects flags a **NEW** tag you accept?
-   `mkdir -p taxonomy/<path>` then `elixir tools/derive_indexes.exs`.
-5. **Commit (the ratification)**: `git add -A && git commit` — `-A`,
-   because the capture also refreshed derived view files, and they must
-   land in the same commit. The hook runs every check; silence, then
-   the commit lands.
+   where the backend reported nothing); your prompt **verbatim**; the
+   answer **verbatim**; Side Effects carries the harness digest, the
+   classifier note, and the retriever coverage line. Tags silly? Edit
+   the `tags:` line by hand — pre-commit, that is the audit working.
+   Side Effects flags a **NEW** tag you accept? `mkdir -p
+   taxonomy/<path>` and commit the empty leaf's index at the next
+   derivation.
+6. **Commit to the branch**: `git add exchanges && git commit`. The
+   hook runs the record checks; silence, then the commit lands. Repeat
+   4–6 per exchange for the rest of the cycle.
+7. **Close the cycle**: push the branch, open a PR, let the required
+   record checks pass, then **squash-merge with a hand-written message
+   describing the cycle** — the merge is the ratification. The
+   derivation job then regenerates the views on `main` and commits
+   them itself.
 
 ## Failure behavior, so nothing surprises
 
@@ -81,11 +92,11 @@ elixir tools/ask.exs stub-test "any question"
 ```
 
 Expect a complete exchange + sidecar, canned content, real machinery
-(id sequencing, validation, digest, views). `classify-2.json` exercises
+(validation, digest, sidecar assembly). `classify-2.json` exercises
 the ugly paths: a fenced reply, a NEW tag, and an invalid dep that gets
 dropped with a note. **Stub runs write real files into the ledger** —
-test in a scratch clone, or delete the generated exchange + sidecar and
-rerun `elixir tools/derive_indexes.exs` before committing anything.
+test in a scratch clone, or delete the generated exchange + sidecar
+before committing anything.
 
 ## Testing the live classifier cheaply — the mixed tier
 

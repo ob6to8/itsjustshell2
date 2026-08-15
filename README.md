@@ -17,9 +17,10 @@ is [docs/constitution.md](docs/constitution.md).
 ## Layout
 
     docs/        the governing layer: constitution, intent, invariants,
-                 roles, schema, backend contract, methods, tripwires,
-                 setup (first contact, testing tiers, the inference path),
-                 glossary (every bespoke term, linked to docs and code)
+                 roles, schema, backend contract, methods, workflow
+                 (cycles, merges, derivation), tripwires, setup (first
+                 contact, testing tiers, the inference path), glossary
+                 (every bespoke term, linked to docs and code)
     exchanges/   the ledger: immutable exchange records, flat, dated
       envelopes/ per-exchange sidecars: the harness's raw JSON, kept forever
     taxonomy/    vocabulary only — the tag tree; leaf index.md files are
@@ -39,12 +40,13 @@ git · Elixir (1.14+; 1.18+ recommended) · jq (1.6+) · the `claude` CLI
     elixir tools/ask.exs <slug> "<your question>"
 
 One command in: the exchange file and its sidecar land in the ledger,
-metadata harvested and proposed, derived views refreshed. You read the
-file — the read is the audit — fix judgment fields if needed, and
-commit with `git add -A`. Checks run at commit via the pre-commit hook
-(`git config core.hooksPath tools/hooks`, once). Step-by-step first
-contact, expected outputs, and how to test the pipeline with and
-without live inference: [docs/setup.md](docs/setup.md).
+metadata harvested and proposed. You read the file — the read is the
+audit — fix judgment fields if needed, and commit to your open **cycle
+branch**. When the cycle is done, a PR's required checks pass and your
+hand-written squash merge ratifies it; the derivation job then
+regenerates the views on `main`. The protocol:
+[docs/workflow.md](docs/workflow.md). Step-by-step first contact and
+testing tiers: [docs/setup.md](docs/setup.md).
 
 Unfamiliar term anywhere in this repo? It's defined in
 [docs/glossary.md](docs/glossary.md), linked to the doc that specifies

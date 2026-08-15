@@ -1,0 +1,40 @@
+# The derivation job — one of main's two writers (INV-5', docs/workflow.md):
+# regenerates derived views after every push to main, verifies the full
+# check suite, and commits the regeneration touching #derived paths only.
+# Provenance: exchanges/2026-08-15-bootstrap-thread.md
+name: derive
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  derive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: '27'
+          elixir-version: '1.18'
+      - name: regenerate views
+        run: |
+          elixir tools/derive_indexes.exs
+          elixir tools/derive_threads.exs
+      - name: full check suite against the regenerated state
+        run: elixir tools/check_all.exs
+      - name: commit derived paths only
+        run: |
+          for d in taxonomy threads; do [ -d "$d" ] && git add "$d"; done
+          if git diff --cached --quiet; then
+            echo "views already current; nothing to commit"
+            exit 0
+          fi
+          if git diff --cached --name-only | grep -qv -e '^taxonomy/' -e '^threads/'; then
+            echo "refusing: staged paths outside derived views" >&2
+            git diff --cached --name-only >&2
+            exit 1
+          fi
+          git -c user.name='derivation job' -c user.email='derive@users.noreply.github.com' \
+            commit -m 'derive: regenerate views [skip ci]'
+          git push

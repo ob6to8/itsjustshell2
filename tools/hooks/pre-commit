@@ -1,8 +1,10 @@
 #!/bin/sh
 # Portable doorway only — the checks are Elixir (docs/tripwires.md T4).
 # Install once per clone:  git config core.hooksPath tools/hooks
+# Runs the record checks; view reproducibility is main's concern
+# (docs/workflow.md).
 command -v elixir >/dev/null 2>&1 || {
   echo "pre-commit: elixir is required to run the checks (docs/constitution.md, Prerequisites)" >&2
   exit 1
 }
-exec elixir tools/check_all.exs
+exec elixir tools/check_records.exs

@@ -69,7 +69,6 @@ defmodule PropChecks do
 
     """
     ---
-    id: #{Enum.random(1..9999) |> Integer.to_string() |> String.pad_leading(4, "0")}
     session_id: #{Enum.random(100_000..999_999)}-stub
     date: #{DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.to_iso8601()}
     model: claude-opus-5
