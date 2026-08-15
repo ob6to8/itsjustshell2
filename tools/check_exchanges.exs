@@ -8,7 +8,7 @@
 # #agent-authored — provenance: exchanges/2026-08-15-bootstrap-thread.md
 
 defmodule CheckExchanges do
-  @keys ~w(id session_id date model cost_usd cwd role tags deps)
+  @keys ~w(session_id date model cost_usd cwd role tags deps)
   @sections [
     {"## Prompt", "#human-authored"},
     {"## Response", "#agent-authored"},

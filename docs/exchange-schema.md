@@ -8,7 +8,7 @@ Filename: `exchanges/YYYY-MM-DD-<slug>.md` — the operator names the
 exchange at ask time; naming before the answer exists is the point.
 Sidecar: `exchanges/envelopes/YYYY-MM-DD-<slug>.json`.
 
-## Frontmatter — nine keys, this order, fence at byte zero
+## Frontmatter — eight keys, this order, fence at byte zero
 
 Field provenance classes (who writes the value):
 **envelope** = machine-measured, copied from the harness JSON by the
@@ -21,7 +21,6 @@ are never invented.
 
 | key | provenance | notes |
 |---|---|---|
-| `id:` | envelope (derived) | next integer over the ledger, zero-padded to 4; the filesystem is the counter |
 | `session_id:` | envelope | |
 | `date:` | envelope | UTC, ISO-8601, stamped at capture |
 | `model:` | envelope | |
@@ -58,7 +57,6 @@ not a model claim. Anyone can recompute it from the sidecar and diff.
 
 ```
 ---
-id: 0002
 session_id: 3b9fd7e2-8c15-4f60-b2a4-91d3c5e7f8a0
 date: 2026-08-15T09:12:44Z
 model: <model id as reported by the envelope>
