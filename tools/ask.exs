@@ -165,17 +165,6 @@ defmodule IJS.Ledger do
     |> Enum.sort()
   end
 
-  def next_id do
-    max =
-      files()
-      |> Enum.map(&frontmatter_value(&1, "id"))
-      |> Enum.filter(&(&1 && Regex.match?(~r/^\d+$/, &1)))
-      |> Enum.map(&String.to_integer/1)
-      |> Enum.max(fn -> 0 end)
-
-    max + 1 |> Integer.to_string() |> String.pad_leading(4, "0")
-  end
-
   def frontmatter_value(file, key) do
     file
     |> File.read!()
@@ -400,8 +389,6 @@ defmodule IJS.Ask do
     sidecar = "exchanges/envelopes/" <> String.replace_suffix(file_name, ".md", ".json")
     File.exists?(target) && die("refusing to overwrite #{target} — exchanges are immutable")
 
-    id = IJS.Ledger.next_id()
-
     # ---- call 1: the exchange itself ------------------------------------
     opts = %{stub: System.get_env("ASK_STUB"), model: System.get_env("ASK_MODEL")}
 
@@ -458,7 +445,6 @@ defmodule IJS.Ask do
     # ---- write the exchange + sidecar ------------------------------------
     content = """
     ---
-    id: #{id}
     session_id: #{h.session_id || ""}
     date: #{date}
     model: #{h.model || ""}
@@ -489,18 +475,15 @@ defmodule IJS.Ask do
     File.write!(target, content)
     IJS.JQ.build_sidecar(env, c.env, shown_path, sidecar)
 
-    # Mechanical tail: refresh the derived views so the commit lands with
-    # views current — check_views enforces exactly this at the hook.
-    System.cmd("elixir", ["tools/derive_indexes.exs"], stderr_to_stdout: true)
-    System.cmd("elixir", ["tools/derive_threads.exs"], stderr_to_stdout: true)
-    IO.puts("derived views refreshed (indexes, threads)")
-
+    # Derived views are NOT refreshed here: branches carry records only;
+    # the derivation job regenerates views on main after the cycle merges
+    # (docs/workflow.md).
     IO.puts("wrote #{target}")
     IO.puts("      #{sidecar}")
-    IO.puts("  id: #{id} | tags: #{tags_value}#{if c.new_tags != [], do: " (NEW)", else: ""} | deps: #{if c.deps == [], do: "<blank>", else: Enum.join(c.deps, ", ")}")
+    IO.puts("  tags: #{tags_value}#{if c.new_tags != [], do: " (NEW)", else: ""} | deps: #{if c.deps == [], do: "<blank>", else: Enum.join(c.deps, ", ")}")
     IO.puts("  answer cost_usd: #{h.cost || "?"}")
-    IO.puts("review the file, then commit it yourself:")
-    IO.puts("  git add -A && git commit   # -A: the refreshed derived views belong in the same commit")
+    IO.puts("review the file, then commit it to your open cycle branch:")
+    IO.puts("  git add exchanges && git commit")
   end
 end
 
