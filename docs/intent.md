@@ -16,11 +16,12 @@ the enforcement system: it polices its own files.
 ## Vehicle
 
 - `tools/ask.exs` — the capture pipeline: one command in, one
-  schema-complete exchange + sidecar out, derived views refreshed.
-- `tools/check_authorship.exs`, `check_exchanges.exs`, `check_deps.exs`,
-  `check_views.exs`, `check_all.exs` — the armed invariants, run on
-  every commit; `check_views` regenerates every derived view and diffs
-  it against what is committed.
+  schema-complete exchange + sidecar out.
+- `tools/check_authorship.exs`, `check_exchanges.exs`, `check_deps.exs`
+  (record checks, run at every commit and on every PR),
+  `check_views.exs` (derived views equal their regeneration — holds on
+  `main`, where the derivation job refreshes them after each merge),
+  `check_records.exs` / `check_all.exs` — the runners.
 - `tools/derive_threads.exs`, `derive_indexes.exs` — the views.
 
 ## Scenarios

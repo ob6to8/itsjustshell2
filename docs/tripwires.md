@@ -63,3 +63,11 @@ Trigger: a recurring task class where the fenced-return mode forces
 contortions (multi-file changes, refactors).
 Response: invoke the `executor` role (already seated, see
 [roles.md](roles.md)) — do not widen the generator.
+
+**T8 — Second writer.**
+Deferred: multi-writer discipline beyond the cycle rules.
+Trigger: a second person or standing agent begins opening cycles.
+Response: revisit the dep-scope rule (`main` ∪ own branch), the
+same-day filename-collision convention, and whether merges require a
+second reviewer; enable the branch-protection settings listed in
+[workflow.md](workflow.md) if not already on.

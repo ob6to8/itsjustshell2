@@ -76,15 +76,17 @@ Where: [roles.md](roles.md) · agent-facing contract:
 The whole path from one operator command to one committed-ready record:
 ask → envelope harvest → [retriever](#retriever) → [classifier](#classifier)
 proposal → validation → exchange + sidecar written → operator audit →
-operator commit.
+commit on the open [cycle](#cycle) branch.
 Where: [intent.md](intent.md) · code: [../tools/ask.exs](../tools/ask.exs)
 (entry: `IJS.Ask.main/1`).
 
 ## checks
 
 The armed invariants — deterministic scripts that exit `0` silently on a
-healthy repo and print the offending path with exit `1` otherwise, run on
-every commit via the pre-commit hook.
+healthy repo and print the offending path with exit `1` otherwise. The
+pre-commit hook and the PR-required CI run the record checks
+(`check_records`: authorship, exchanges, deps); `check_views` guards
+`main` after derivation; `check_all` runs everything.
 Where: [invariants.md](invariants.md) (which invariant each check arms) ·
 code: [../tools/check_authorship.exs](../tools/check_authorship.exs),
 [../tools/check_exchanges.exs](../tools/check_exchanges.exs),
@@ -110,6 +112,17 @@ what a transcript can capture verbatim. Contrast [work layer](#work-layer).
 Where: declared in the bootstrap record's preamble,
 [../exchanges/2026-08-15-bootstrap-thread.md](../exchanges/2026-08-15-bootstrap-thread.md).
 
+## cycle
+
+The unit of work between exchanges and history: a branch
+(`cycle/YYYY-MM-DD-<name>`, named at open — intent declared before the
+work exists) carrying one or more record commits, closed by a PR whose
+required checks pass and whose squash merge carries the operator's
+hand-written message describing the cycle. Cycles may run in parallel;
+each must be self-contained modulo `main` ([deps](#deps) target `main`
+∪ the cycle's own branch).
+Where: [workflow.md](workflow.md).
+
 ## deps
 
 Frontmatter field: comma-separated repo-relative paths of prior
@@ -121,14 +134,26 @@ Where: [exchange-schema.md](exchange-schema.md) ·
 [../tools/check_deps.exs](../tools/check_deps.exs), and the dep-walk in
 [../tools/derive_threads.exs](../tools/derive_threads.exs).
 
+## derivation job
+
+The deterministic CI job that runs on every push to `main`: regenerates
+all derived views, verifies the full check suite, and — only when views
+changed — commits the regeneration itself, touching `#derived` paths
+only. One of exactly two writers of `main` (the other is the operator's
+merge); it is machinery, not an agent, per the trust gradient.
+Where: [workflow.md](workflow.md) · [invariants.md](invariants.md)
+INV-5′ · code: `.github/workflows/derive.yml`.
+
 ## derived view
 
 A file computed wholesale from the ledger by a deterministic tool —
 [threads](#thread) (lineage) and taxonomy leaf indexes (aboutness).
 Marked `#derived`; regenerated, never hand-edited; links only, never
-copies. The third mutability regime. Falsifiable by regeneration: at
-every commit, `check_views` recomputes every view and diffs it against
-what is committed, so a stale or hand-edited view fails the hook.
+copies. The third mutability regime. Views live on `main` only —
+[cycle](#cycle) branches carry records, never view changes; after each
+merge the [derivation job](#derivation-job) regenerates the views, and
+`check_views` verifies that `main`'s views equal their regeneration
+(falsifiable by regeneration).
 Where: [constitution.md](constitution.md) §3, §6 · code:
 [../tools/derive_threads.exs](../tools/derive_threads.exs),
 [../tools/derive_indexes.exs](../tools/derive_indexes.exs),
@@ -360,7 +385,7 @@ role-aware checking in
 
 ## schema
 
-The exchange file's required shape: nine frontmatter keys in order,
+The exchange file's required shape: eight frontmatter keys in order,
 fence at byte zero, three sections each under its marker. Extra keys
 fail — that arms tripwire T5 (schema drift).
 Where: [exchange-schema.md](exchange-schema.md) · enforced by
