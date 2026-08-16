@@ -62,7 +62,9 @@ are blocked. Sole bypass actor: deploy keys — one write-enabled key
 exists, held by the derivation job as the `DERIVE_SSH_KEY` secret, so
 the job is `main`'s only direct pusher. The operator lands work
 through PR merges like any writer; the job's workflow token is
-read-only, so the deploy key is its single write path.
+read-only, so the deploy key is its single write path. The reasoned
+walk-through — every console step and why — is in
+[setup.md](setup.md).
 
 ## Failure handling
 
