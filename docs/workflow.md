@@ -6,6 +6,10 @@ Terms: [cycle](glossary.md#cycle) · [derivation job](glossary.md#derivation-job
 
 ## The unit of work is the cycle
 
+#human-authored
+The idea behind the workflow in this system is similar to that of a feature branch - the user creates a branch `cycle/YYYY-MM-DD-<name>`, where <name> is the expected focus of a series of exchanges. Exchanges, being single turn ephemeral communication between the operator and agent, are mapped to single commits, which aggregate progressively as a "cycle" of work. Once the cycle has been resolved, or once reaching the point that the operator wants to cease work, they issue a pull request to merge work into main from that branch. The commits made by the operator notably do not include derived views which are deterministically generated - given they are not to be changed by operators or agents, they are retained on main and can only be touched by CI/CD.
+
+#agent-authored
 A cycle is a branch: `cycle/YYYY-MM-DD-<name>`, named when it is opened
 — intent declared before the work exists. A cycle carries any change
 class — exchanges and sidecars, docs, tools, taxonomy nodes — with one
