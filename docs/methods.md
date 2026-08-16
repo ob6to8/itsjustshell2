@@ -77,5 +77,6 @@ doc's debt counter re-taken. Plus `check_all` on a fresh clone.
 What no layer can hold — scope selection, taste, the judgment of what to
 ask — has a named owner: the operator, knowingly. Current known residue:
 INV-2's committed-immutability check and INV-4's provenance-link check
-are unarmed halves; the no-agent-commits rule is contract, not mechanism.
+are unarmed halves; INV-5′'s never-merge rule is contract, not mechanism
+(its never-push-to-`main` half is armed by the `main` ruleset).
 Each is either armed eventually or stays here, owned.
