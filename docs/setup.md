@@ -2,7 +2,7 @@
 
 #agent-authored
 Provenance: [../exchanges/2026-08-15-bootstrap-thread.md](../exchanges/2026-08-15-bootstrap-thread.md)
-Terms: [capture](glossary.md#capture) · [checks](glossary.md#checks) · [envelope](glossary.md#envelope) · [adapter](glossary.md#adapter) · [backend](glossary.md#backend) · [sidecar](glossary.md#sidecar) · [tags](glossary.md#tags) · [deps](glossary.md#deps)
+Terms: [capture](glossary.md#capture) · [checks](glossary.md#checks) · [envelope](glossary.md#envelope) · [adapter](glossary.md#adapter) · [backend](glossary.md#backend) · [sidecar](glossary.md#sidecar) · [tags](glossary.md#tags) · [deps](glossary.md#deps) · [cycle](glossary.md#cycle) · [derivation job](glossary.md#derivation-job) · [operator](glossary.md#operator)
 
 ## Prerequisites
 
@@ -68,6 +68,160 @@ The full operating protocol — cycles, branches, merges, derivation — is
    describing the cycle** — the merge is the ratification. The
    derivation job then regenerates the views on `main` and commits
    them itself.
+
+## The `main` gate — why it exists and how to stand it up
+
+The long-form version of [workflow.md](workflow.md)'s protections
+paragraph: every console step, plus the reasoning, in plain terms. It
+assumes a cloned repo and admin rights on the GitHub repository.
+
+### The principle
+
+The repo runs on one promise: nothing reaches `main` except a cycle
+the operator read and ratified by merging it, and the derivation job's
+regeneration of derived views. Every doc here states that promise;
+stating it enforces nothing. A rule that lives only in prose binds
+exactly as long as everyone remembers it and every tool behaves — and
+the moment an agent holds write credentials, "remember not to push" is
+a contract with a failure mode. The gate moves the rule out of prose
+and into the host: GitHub itself rejects the pushes the protocol
+forbids. Mechanism replacing contract.
+
+The gate must solve one awkward problem: it has to block *everyone* —
+operator and agents alike — while still letting the derivation job
+push view commits straight to `main`. So it is built from two parts: a
+**ruleset** (the wall) and a **deploy key** (the one keyed door).
+
+### The wall — a repository ruleset
+
+A ruleset is GitHub's branch-protection mechanism with a bypass list;
+this repo's ruleset targets the default branch and enforces four
+rules:
+
+- **Require a pull request before merging, approvals = 0.** The rule
+  that closes `main` to direct pushes: commits arrive only through a
+  merged PR — exactly the protocol's shape, where the operator's
+  hand-written squash merge is the ratification. Approvals stay 0
+  because on a solo repo GitHub will not let you approve your own PR;
+  requiring 1 would deadlock every cycle.
+- **Require status checks to pass, check = `records`.** The machine
+  half of the merge gate: red record checks block the button. The
+  operator ratifies content; the checks hold the schema.
+- **Restrict deletions** and **Block force pushes.** Ledger
+  immutability at the host level: `main`'s history can be added to,
+  never rewritten or removed.
+
+Two look tempting and are deliberately off: **Restrict updates** would
+demand bypass permission for every update including the operator's own
+PR merges (stricter than the protocol), and **Require linear history**
+is redundant when every landing is a squash or a single derive commit.
+
+The **bypass list** is who the wall does not apply to, and it holds
+exactly one entry: **Deploy keys**. Not the operator — the gate is
+supposed to bind you, and your writes go through PR merges anyway. Not
+any agent app — a bypass there would hand an agent the direct write to
+`main` that INV-5′ exists to forbid.
+
+### The door — one deploy key
+
+The derivation job is a GitHub Actions workflow, and workflows
+normally push with GitHub's built-in token — but GitHub offers no way
+to put that built-in token on a bypass list. The two identities that
+can hold a bypass are a custom GitHub App (an app to register, plus a
+token-minting step in the workflow) and a deploy key — an SSH key pair
+registered on this one repository. One repo, one job: the deploy key
+is the right size.
+
+The arrangement:
+
+- The **public half** is registered as a deploy key with write access
+  — the lock on the door.
+- The **private half** lives in one place: the repository secret
+  `DERIVE_SSH_KEY`, injected into the derivation job and shown to no
+  one. The key to the door.
+- `derive.yml` checks out with `ssh-key: ${{ secrets.DERIVE_SSH_KEY }}`,
+  so the job's later `git push` authenticates as the deploy key — a
+  bypass actor — and passes the wall.
+- The job's own workflow token is `contents: read`, deliberately: the
+  job cannot push any way *except* the key, so the bypass list is a
+  complete inventory of who may write to `main` directly.
+
+Two side conditions, already in `derive.yml`, that only matter because
+a key is involved:
+
+- The derive commit message ends in `[skip ci]`. Token pushes never
+  trigger workflows (GitHub's recursion guard); deploy-key pushes do —
+  the marker is what keeps the derivation job from re-triggering
+  itself.
+- The job's path guard refuses to commit anything outside `taxonomy/`
+  and `threads/` — holding the key does not widen what the job may
+  write.
+
+What the gate does not cover: GitHub gates what may merge, not who
+presses the button, so nothing at the host level stops a write-capable
+agent from merging a green PR. The never-merge half of INV-5′ remains
+contract, owned in the methods residue.
+
+### Standing it up, in order
+
+Order matters for one reason: a ruleset activated before the key works
+strands the derivation job — its next push is rejected and views stop
+regenerating. Recoverable, but pointless. Build the door before
+activating the wall.
+
+1. **Create the ruleset, Disabled.** Settings → Rules → Rulesets →
+   New branch ruleset. Name it anything; **Enforcement status:
+   Disabled** for now. **Bypass list → Add bypass → Deploy keys.**
+   **Target branches → Include default branch.** Tick the four rules
+   above — each rule's sub-settings (the approvals count, the check
+   picker) appear only after its parent box is ticked; set
+   **Required approvals: 0** and **Add checks → `records`** (the name
+   is known to GitHub once the check has run on any PR). Create.
+2. **Mint the key** on your machine:
+   `ssh-keygen -t ed25519 -f derive_key -N "" -C "derivation-job"` —
+   produces `derive_key` (private) and `derive_key.pub` (public).
+3. **Install the lock.** Settings → Deploy keys → Add deploy key →
+   paste the contents of `derive_key.pub`, **check "Allow write
+   access"**, Add. Expect the entry labeled **Read/write** — a
+   Read-only label means the box was missed; delete the entry and
+   re-add it (there is no edit).
+4. **Install the key.** Settings → Secrets and variables → Actions →
+   New repository secret, name exactly `DERIVE_SSH_KEY`, value = the
+   entire contents of `derive_key`, BEGIN/END lines included. GitHub
+   shows the name, never the value.
+5. **Destroy the local copies:** `rm derive_key derive_key.pub`. The
+   repository settings now hold the only copies that matter.
+6. **Prove the door.** Merge any cycle, or re-run the derive workflow
+   from the Actions tab. Green means the job checked out over SSH with
+   the key. Red at checkout with `Permission denied (publickey)` means
+   the secret is missing, misnamed, or mismatched with the registered
+   key.
+7. **Activate the wall.** Edit the ruleset → Enforcement status:
+   **Active** → Save.
+
+### What you should see once it is on
+
+- A cycle PR shows `records` as a **Required** check; the merge button
+  stays blocked while it is red.
+- A direct push to `main` — anyone, any clone — is rejected with a
+  ruleset violation. That is correct behavior, operator included: land
+  it as a cycle instead.
+- After a ratified merge that changes views, the derivation job still
+  lands its `derive: regenerate views` commit. That push succeeding
+  *is* the bypass working.
+
+### Gate failure notes
+
+- **Derive push rejected after activation**: the bypass list lost
+  "Deploy keys", or the push is not using the key (secret gone or
+  renamed). Fix the setting or the secret, then re-run the failed job
+  from the Actions tab — it committed nothing.
+- **Key rotation**: mint a new pair (steps 2–5) and delete the old
+  deploy key entry. Nothing in the repo's files changes; the key never
+  appears in them.
+- **A second writer arrives**: the bypass class is *all* write-enabled
+  deploy keys on this repo — revisit T8 in
+  [tripwires.md](tripwires.md) before handing anyone else keys.
 
 ## Failure behavior, so nothing surprises
 
