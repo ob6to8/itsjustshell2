@@ -1,18 +1,23 @@
 # The derivation job — one of main's two writers (INV-5', docs/workflow.md):
 # regenerates derived views after every push to main, verifies the full
 # check suite, and commits the regeneration touching #derived paths only.
+# The push authenticates with the write-enabled deploy key (secret
+# DERIVE_SSH_KEY), the main ruleset's sole bypass actor; the workflow
+# token stays read-only, so the key is this job's single write path.
 # Provenance: exchanges/2026-08-15-bootstrap-thread.md
 name: derive
 on:
   push:
     branches: [main]
 permissions:
-  contents: write
+  contents: read
 jobs:
   derive:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.DERIVE_SSH_KEY }}
       - uses: erlef/setup-beam@v1
         with:
           otp-version: '27'

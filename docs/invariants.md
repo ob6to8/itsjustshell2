@@ -59,6 +59,7 @@ the gate moved from commit to merge; a deterministic deriver is
 machinery, not an agent. Breaks: ratification evaporates, or invented
 views enter `main` unverified. Armed by: `tools/hooks/pre-commit`
 (record checks at every commit) + the PR-required record check + the
-derivation job's own path guard; the branch-protection half lives in
-repository settings (operator console) — until enabled it is contract,
+derivation job's own path guard + the `main` ruleset (PR-only merges,
+`records` required, the derivation job's deploy key the sole bypass —
+[workflow.md](workflow.md)). The never-merge half stays contract,
 noted in the residue.

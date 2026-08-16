@@ -55,11 +55,14 @@ fails, the job fails loudly and commits nothing.
 
 ## `main` protections
 
-Intended repository settings (operator-console acts; record here, apply
-there): require a PR before merging; require the `records` check to
-pass; restrict direct pushes, with the derivation job as the sole
-push-capable exception. Until enabled, these are held by convention and
-by the hook — enabling them is mechanism replacing contract.
+The gate is a repository ruleset on `main` (operator-console act:
+recorded here, applied there): a PR is required before merging, the
+`records` check is required to pass, and deletions and force pushes
+are blocked. Sole bypass actor: deploy keys — one write-enabled key
+exists, held by the derivation job as the `DERIVE_SSH_KEY` secret, so
+the job is `main`'s only direct pusher. The operator lands work
+through PR merges like any writer; the job's workflow token is
+read-only, so the deploy key is its single write path.
 
 ## Failure handling
 
