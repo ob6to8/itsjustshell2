@@ -57,9 +57,11 @@ The full operating protocol — cycles, branches, merges, derivation — is
    answer **verbatim**; Side Effects carries the harness digest, the
    classifier note, and the retriever coverage line. Tags silly? Edit
    the `tags:` line by hand — pre-commit, that is the audit working.
-   Side Effects flags a **NEW** tag you accept? `mkdir -p
-   taxonomy/<path>` and commit the empty leaf's index at the next
-   derivation.
+   Side Effects flags a **NEW** tag you accept? Declare the leaf:
+   `mkdir -p taxonomy/<path>`, add a one-line README naming what
+   belongs there (bare directories cannot be committed), and commit it
+   with the cycle. The derivation job writes the leaf's `index.md` at
+   the next merge — branch views lag by design.
 6. **Commit to the branch**: `git add exchanges && git commit`. The
    hook runs the record checks; silence, then the commit lands. Repeat
    4–6 per exchange for the rest of the cycle.
